@@ -1,5 +1,6 @@
-import { getAllAsistencias, registrarAsistencia } from "../services/asistenciaService.js";
+import { getAllAsistencias, registrarAsistencia, getAllLlegadasTarde } from "../services/asistenciaService.js";
 
+// Controlador para obtener todas las asistencias
 export const obtenerAsistencias = async (req, res) => {
   try {
     const asistencias = await getAllAsistencias();
@@ -9,7 +10,7 @@ export const obtenerAsistencias = async (req, res) => {
   }
 };
 
-
+// Controlador para registrar una nueva asistencia
 export const nuevaAsistencia = async (req, res) => {
   try {
     const { empleado_id, fecha, hora } = req.body;
@@ -25,3 +26,13 @@ export const nuevaAsistencia = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Controlador para obtener todas las llegadas tardes
+export const getLlegadasTarde = async (req, res) => {
+  try {
+    const asistenciasTarde = await getAllLlegadasTarde();
+    res.json(asistenciasTarde);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
