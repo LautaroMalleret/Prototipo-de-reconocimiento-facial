@@ -4,7 +4,8 @@ import supabase from "../config/db.js";
 export const getAllAsistencias = async () => {
   const { data, error } = await supabase
     .from("asistencia")
-    .select("*, empleados(nombre, apellido)");
+    .select("*, empleados(nombre, apellido)")
+    .order("fecha", { descending: true });
   if (error) throw error;
   return data;
 };
@@ -128,7 +129,8 @@ export const getTiempoDeRetrasoPorFecha = async () => {
   try {
     const { data, error } = await supabase
       .from("asistencia")
-      .select("fecha, retraso_entrada");
+      .select("fecha, retraso_entrada")
+      .order("fecha", { descending: true });
 
     if (error) throw error;
 
@@ -157,7 +159,6 @@ export const getTiempoDeRetrasoPorFecha = async () => {
     throw error;
   }
 };
-
 
 // Función para calcular retraso en minutos dependiendo el turno del empleado
 function calcularRetraso(turno, horaIngreso) {
@@ -213,7 +214,7 @@ function minutosATime(minutos) {
   ).padStart(2, "0")}`;
 }
 
-    // Convertir segundos → minutos totales (entero)
-    function segundosAMinutos(totalSegundos) {
-      return Math.floor(totalSegundos / 60);
-    }
+// Convertir segundos → minutos totales (entero)
+function segundosAMinutos(totalSegundos) {
+  return Math.floor(totalSegundos / 60);
+}
