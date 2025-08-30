@@ -1,4 +1,10 @@
-import { getAllAsistencias, registrarAsistencia, getAllLlegadasTarde } from "../services/asistenciaService.js";
+import {
+  getAllAsistencias,
+  registrarAsistencia,
+  getAllLlegadasTarde,
+  getAllFaltas,
+  getTiempoDeRetrasoPorFecha,
+} from "../services/asistenciaService.js";
 
 // Controlador para obtener todas las asistencias
 export const obtenerAsistencias = async (req, res) => {
@@ -35,4 +41,24 @@ export const getLlegadasTarde = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
+
+export const getFaltas = async (req, res) => {
+  try {
+    const faltas = await getAllFaltas();
+    res.json(faltas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+//obtener el timepo total de retraso de los empleados por fecha
+export const getTiempoDeRetraso = async (req, res) => {
+  try {
+    const timepoDeRetraso = await getTiempoDeRetrasoPorFecha();
+    res.json(timepoDeRetraso);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+  
+};

@@ -77,6 +77,87 @@ export const registrarAsistencia = async ({ empleado_id, fecha, hora }) => {
   }
 };
 
+//función para obtener todas las faltas
+export const getAllFaltas = async () => {
+  try {
+    // 1. Obtener empleados
+    const { data: empleados, error: errorEmp } = await supabase
+      .from("empleados")
+      .select("_id");
+    if (errorEmp) throw errorEmp;
+
+    const totalEmpleados = empleados.length;
+
+    // 2. Obtener todas las fechas con asistencia
+    const { data: fechasData, error: errorFechas } = await supabase
+      .from("asistencia")
+      .select("fecha")
+      .order("fecha", { ascending: true });
+
+    if (errorFechas) throw errorFechas;
+
+    // Fechas únicas
+    const fechas = [...new Set(fechasData.map((f) => f.fecha))];
+
+    // 3. Calcular faltas por fecha
+    const resultado = [];
+
+    for (const fecha of fechas) {
+      // cuantos presentes hay este día
+      const { count: presentes, error: errorPresentes } = await supabase
+        .from("asistencia")
+        .select("empleado_id", { count: "exact", head: true })
+        .eq("fecha", fecha);
+
+      if (errorPresentes) throw errorPresentes;
+
+      const faltas = totalEmpleados - presentes;
+      resultado.push({ fecha, faltas });
+    }
+    return resultado;
+    // res.json(resultado);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Función para obtener el tiempo total de retraso por fecha
+export const getTiempoDeRetrasoPorFecha = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("asistencia")
+      .select("fecha, retraso_entrada");
+
+    if (error) throw error;
+
+    // Agrupar por fecha y sumar
+    const resultado = {};
+
+    for (const row of data) {
+      const fecha = row.fecha;
+      const [h, m, s] = row.retraso_entrada.split(":").map(Number);
+      const segundos = h * 3600 + m * 60 + s;
+
+      if (!resultado[fecha]) resultado[fecha] = 0;
+      resultado[fecha] += segundos;
+    }
+
+    // Transformar en array [{fecha, minutos}]
+    const salida = Object.entries(resultado).map(([fecha, segundos]) => ({
+      fecha,
+      minutos: segundosAMinutos(segundos),
+    }));
+
+    console.log(salida);
+    return salida;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+
 // Función para calcular retraso en minutos dependiendo el turno del empleado
 function calcularRetraso(turno, horaIngreso) {
   var horaNormal = "";
@@ -130,3 +211,8 @@ function minutosATime(minutos) {
     s
   ).padStart(2, "0")}`;
 }
+
+    // Convertir segundos → minutos totales (entero)
+    function segundosAMinutos(totalSegundos) {
+      return Math.floor(totalSegundos / 60);
+    }
