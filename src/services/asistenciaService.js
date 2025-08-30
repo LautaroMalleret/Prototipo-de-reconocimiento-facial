@@ -14,7 +14,8 @@ export const getAllLlegadasTarde = async () => {
   const { data, error } = await supabase
     .from("asistencia")
     .select("*, empleados(nombre, apellido)")
-    .neq("retraso_entrada", "00:00:00");
+    .neq("retraso_entrada", "00:00:00")
+    .order("fecha", { descending: true });
   if (error) throw error;
   return data;
 };
