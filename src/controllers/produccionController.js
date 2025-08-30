@@ -3,7 +3,7 @@ import { getAllCumplimientos } from "../services/produccionService.js";
 export const obtenerCumplimientos = async (req, res) => {
   try {
     const tipo = req.params.tipo;
-    console.log(tipo);
+    // console.log(tipo);
     const cumplimientos = await getAllCumplimientos(tipo);
     // console.log(cumplimientos);
     res.json(cumplimientos);
