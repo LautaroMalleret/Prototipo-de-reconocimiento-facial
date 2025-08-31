@@ -20,3 +20,12 @@ export const getAllRendimientos = async (tipo) => {
   .order("fecha", { ascending: true });
   return rendimientos;
 } 
+
+export const getAllEstadisticas = async (tipo) => {
+  const { data: estadisticas, error: estadisticasError } = await supabase
+  .from("produccion")
+  .select("fecha, disponibilidad, cumplimiento, calidad")
+  .eq("producto", tipo)
+  .order("fecha", { ascending: true });
+  return estadisticas;
+}
