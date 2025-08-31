@@ -29,3 +29,25 @@ export const getAllEstadisticas = async (tipo) => {
   .order("fecha", { ascending: true });
   return estadisticas;
 }
+
+export const getAllOee = async () => {
+  const { data, error } = await supabase
+  .from("produccion")
+  .select("fecha, producto, oee")
+  .order("fecha", { ascending: true });
+
+if (error) throw error;
+
+// Pivot manual en Node
+const resultado = [];
+
+data.forEach(row => {
+  let fechaRow = resultado.find(r => r.fecha === row.fecha);
+  if (!fechaRow) {
+    fechaRow = { fecha: row.fecha };
+    resultado.push(fechaRow);
+  }
+  fechaRow[row.producto] = row.oee;
+});
+return resultado;
+}
