@@ -11,3 +11,12 @@ export const getAllCumplimientos = async (tipo) => {
   // if (error) throw cumplimientosError;
     return cumplimientos;
 }
+
+export const getAllRendimientos = async (tipo) => {
+  const { data: rendimientos, error: rendimientosError } = await supabase
+  .from("produccion")
+  .select("fecha, plan_minutos,tiempo_operativo")
+  .eq("producto", tipo)
+  .order("fecha", { ascending: true });
+  return rendimientos;
+} 

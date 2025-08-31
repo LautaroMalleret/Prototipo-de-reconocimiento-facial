@@ -1,4 +1,4 @@
-import { getAllCumplimientos } from "../services/produccionService.js";
+import { getAllCumplimientos, getAllRendimientos } from "../services/produccionService.js";
 
 export const obtenerCumplimientos = async (req, res) => {
   try {
@@ -7,6 +7,18 @@ export const obtenerCumplimientos = async (req, res) => {
     const cumplimientos = await getAllCumplimientos(tipo);
     // console.log(cumplimientos);
     res.json(cumplimientos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const obtenerRendimiento = async (req, res) => {
+  try {
+    const tipo = req.params.tipo;
+    // console.log(tipo);
+    const rendimiento = await getAllRendimientos(tipo);
+    // console.log(cumplimientos);
+    res.json(rendimiento);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
