@@ -5,6 +5,7 @@ import empleadoRoutes from "./routes/empleadoRoutes.js";
 import asistenciaRoutes from "./routes/asistenciaRoutes.js";
 import produccionRoutes from "./routes/produccionRoutes.js";
 import incidenciaRoutes from "./routes/incidenciaRoutes.js"
+import loginRoutes from "./routes/loginRoutes.js"
 
 const app = express();
 
@@ -15,5 +16,6 @@ app.use("/api/empleados", empleadoRoutes);
 app.use("/api/asistencias", asistenciaRoutes);
 app.use("/api/produccion",produccionRoutes);
 app.use("/api/incidencia", incidenciaRoutes)
+app.use("/api/login", loginRoutes);
 
 export default app;
