@@ -1,4 +1,4 @@
-import { getAllEmpleados, crearEmpleado } from "../services/empleadoService.js";
+import { getAllEmpleados, crearEmpleado, getUltimoId } from "../services/empleadoService.js";
 
 // Controlador para obtener todos los empleados
 export const obtenerEmpleados = async (req, res) => {
@@ -27,4 +27,15 @@ export const nuevoEmpleado = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
+}
+
+export const obtenerUltimoId = async (req, res) =>{
+  try {
+    const ultimoId = await getUltimoId();
+    res.json(ultimoId);
+  }
+  catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
 }
