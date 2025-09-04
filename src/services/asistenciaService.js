@@ -20,10 +20,48 @@ export const getAllLlegadasTarde = async () => {
   if (error) throw error;
   return data;
 };
-
-// Función para registrar o actualizar asistencia
-export const registrarAsistencia = async ({ empleado_id, fecha, hora }) => {
+export const registrarIngreso = async ({ empleado_id, fecha, hora }) => {
+  //obtengo el turno del empleado
   const { data: turnoData, error: turnoError } = await supabase
+    .from("empleados")
+    .select("turno")
+    .eq("_id", empleado_id)
+    .single();
+  console.log(turnoData);
+  if (turnoError) throw turnoError;
+  const turno = turnoData.turno;
+  //formateo hora y fecha
+  const horaFormateada = formatearHora(hora);
+  let fechaFormateada = formatearFecha(fecha, 0);
+
+  //verifico que no tenga un ingreso esa misma fecha
+  const { data: existente, error: fetchError } = await supabase
+    .from("asistencia")
+    .select("*")
+    .eq("empleado_id", empleado_id)
+    .eq("fecha", fechaFormateada)
+    .single();
+  //verifico que este ingresando en su turno y ya no tenga una asistencia ese mismo dia
+  if (permitirAccesoTurno(turno, horaFormateada) && !existente) {
+    console.log("Creando nuevo ingreso...");
+    //calculo el retraso
+    const retraso = calcularRetraso(turno, horaFormateada);
+    //guardo el ingreso
+    const { data, error } = await supabase.from("asistencia").insert({
+      empleado_id,
+      fecha: fechaFormateada,
+      hora_ingreso: horaFormateada,
+      retraso_entrada: retraso,
+    });
+    if (error) throw error;
+    return true;
+  }
+  return false;
+};
+
+//funcion para registrar un egreso
+export const registrarEgreso = async ({ empleado_id, fecha, hora }) => {
+    const { data: turnoData, error: turnoError } = await supabase
     .from("empleados")
     .select("turno")
     .eq("_id", empleado_id)
@@ -32,52 +70,95 @@ export const registrarAsistencia = async ({ empleado_id, fecha, hora }) => {
   if (turnoError) throw turnoError;
   const turno = turnoData.turno;
 
+  //formateo hora y fecha
   const horaFormateada = formatearHora(hora);
   let fechaFormateada = formatearFecha(fecha, 0);
-
-  // Si es turno noche y la hora < 12:00, la fecha corresponde al día anterior
-  if (turno === "noche" && horaFormateada < "12:00:00") {
+  //si el turno es noche, 
+    if (turno === "noche") {
     fechaFormateada = formatearFecha(fecha, 1);
   }
-
-  // Verificar si ya existe asistencia
+  //verifico que tenga un ingreso registrado
   const { data: existente, error: fetchError } = await supabase
     .from("asistencia")
     .select("*")
     .eq("empleado_id", empleado_id)
     .eq("fecha", fechaFormateada)
     .single();
-
-  if (fetchError && fetchError.code !== "PGRST116") {
-    throw fetchError;
-  }
-
+  if (fetchError) throw fetchError;
   if (!existente) {
-    console.log("No existe asistencia previa, creando nueva...");
-
-    const retraso = calcularRetraso(turno, horaFormateada);
-
-    const { data, error } = await supabase.from("asistencia").insert({
-      empleado_id,
-      fecha: fechaFormateada,
-      hora_ingreso: horaFormateada,
-      retraso_entrada: retraso,
-    });
-
-    if (error) throw error;
-    return data;
-  } else {
-    console.log("Ya existe asistencia previa, actualizando...");
-    console.log("hora de salida: " + horaFormateada);
-    const { data, error } = await supabase
-      .from("asistencia")
-      .update({ hora_egreso: horaFormateada })
-      .eq("empleado_id", existente.empleado_id); // importante usar el id del registro existente
-
-    if (error) throw error;
-    return data;
+    return false;
   }
+  //si tiene un acceso registrado registro el egreso
+  if(existente.hora_egreso === null){
+  console.log("Ya existe asistencia previa, actualizando...");
+  const { data, error } = await supabase
+    .from("asistencia")
+    .update({ hora_egreso: horaFormateada })
+    .eq("empleado_id", existente.empleado_id)
+    // .eq("fecha", existente.fechaFormateada);
+
+  if (error) throw error;
+  return true;}
+  return false;
 };
+
+// Función para registrar o actualizar asistencia
+// export const registrarAsistencia = async ({ empleado_id, fecha, hora }) => {
+//   const { data: turnoData, error: turnoError } = await supabase
+//     .from("empleados")
+//     .select("turno")
+//     .eq("_id", empleado_id)
+//     .single();
+
+//   if (turnoError) throw turnoError;
+//   const turno = turnoData.turno;
+
+//   const horaFormateada = formatearHora(hora);
+//   let fechaFormateada = formatearFecha(fecha, 0);
+
+//   // Si es turno noche y la hora < 12:00, la fecha corresponde al día anterior
+//   if (turno === "noche" && horaFormateada < "12:00:00") {
+//     fechaFormateada = formatearFecha(fecha, 1);
+//   }
+
+//   // Verificar si ya existe asistencia
+//   const { data: existente, error: fetchError } = await supabase
+//     .from("asistencia")
+//     .select("*")
+//     .eq("empleado_id", empleado_id)
+//     .eq("fecha", fechaFormateada)
+//     .single();
+
+//   if (fetchError && fetchError.code !== "PGRST116") {
+//     throw fetchError;
+//   }
+
+//   if (!existente) {
+//     console.log("No existe asistencia previa, creando nueva...");
+
+//     const retraso = calcularRetraso(turno, horaFormateada);
+
+//     const { data, error } = await supabase.from("asistencia").insert({
+//       empleado_id,
+//       fecha: fechaFormateada,
+//       hora_ingreso: horaFormateada,
+//       retraso_entrada: retraso,
+//     });
+
+//     if (error) throw error;
+//     return data;
+//   } else {
+//     console.log("Ya existe asistencia previa, actualizando...");
+//     console.log("hora de salida: " + horaFormateada);
+//     const { data, error } = await supabase
+//       .from("asistencia")
+//       .update({ hora_egreso: horaFormateada })
+//       .eq("empleado_id", existente.empleado_id); // importante usar el id del registro existente
+
+//     if (error) throw error;
+//     return data;
+//   }
+// };
 
 //función para obtener todas las faltas
 export const getAllFaltas = async () => {
@@ -217,4 +298,18 @@ function minutosATime(minutos) {
 // Convertir segundos → minutos totales (entero)
 function segundosAMinutos(totalSegundos) {
   return Math.floor(totalSegundos / 60);
+}
+
+//verifico que ingrese maximo una hora antes de su turno
+function permitirAccesoTurno(turno, hora) {
+  if (turno === "mañana" && hora >= "05:00:00") {
+    return true;
+  }
+  if (turno === "tarde" && hora >= "13:00:00") {
+    return true;
+  }
+  if (turno === "noche" && hora >= "21:00:00") {
+    return true;
+  }
+  return false;
 }

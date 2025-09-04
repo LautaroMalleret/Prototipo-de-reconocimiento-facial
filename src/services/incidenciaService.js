@@ -3,7 +3,10 @@ import supabase from "../config/db.js";
 
 // Función para obtener todos los empleados
 export const getAllIncidencia = async () => {
-  const { data, error } = await supabase.from("incidencias").select("*");
+  const { data, error } = await supabase
+  .from("incidencias")
+  .select("*")
+  .order("fecha", { descending: true });
   if (error) throw error;
   return data;
 };

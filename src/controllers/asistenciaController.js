@@ -1,9 +1,11 @@
 import {
   getAllAsistencias,
-  registrarAsistencia,
+  // registrarAsistencia,
   getAllLlegadasTarde,
   getAllFaltas,
   getTiempoDeRetrasoPorFecha,
+  registrarIngreso,
+  registrarEgreso
 } from "../services/asistenciaService.js";
 
 // Controlador para obtener todas las asistencias
@@ -25,8 +27,13 @@ export const nuevaAsistencia = async (req, res) => {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
 
-    const asistencia = await registrarAsistencia({ empleado_id, fecha, hora });
+    const asistencia = await registrarIngreso({ empleado_id, fecha, hora });
+    if (!asistencia){
+      res.status(404).json({ error: "asistencia no registrada" });
+      return;
+    }
     res.status(201).json({ message: "Asistencia registrada", asistencia });
+   
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -62,3 +69,22 @@ export const getTiempoDeRetraso = async (req, res) => {
   }
   
 };
+
+export const nuevoEgreso = async (req, res) => {
+  try {
+    const { empleado_id, fecha, hora } = req.body; 
+    if (!empleado_id || !fecha || !hora) {
+      return res.status(400).json({ error: "Faltan datos obligatorios" });
+    }
+
+    const egreso = await registrarEgreso({ empleado_id, fecha, hora });
+    if (!egreso){
+      res.status(404).json({ error: "egreso no registrado" });
+      return;
+    }
+    res.status(201).json({ message: "Egreso registrado", egreso });
+  } catch (error){
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
