@@ -1,5 +1,5 @@
 import express from "express";
-import { obtenerAsistencias, nuevaAsistencia, getLlegadasTarde, getFaltas, getTiempoDeRetraso, nuevoEgreso } from "../controllers/asistenciaController.js";
+import { obtenerAsistencias, nuevaAsistencia, getLlegadasTarde, getFaltas, getTiempoDeRetraso, nuevoEgreso, verificarIngreso } from "../controllers/asistenciaController.js";
 
 const router = express.Router();
 
@@ -9,5 +9,6 @@ router.post("/egreso", nuevoEgreso);
 router.get("/tarde", getLlegadasTarde);
 router.get("/faltas", getFaltas);
 router.get("/tiempoDeRetraso", getTiempoDeRetraso);
+router.get("/tieneIngreso/:id", verificarIngreso);
 
 export default router;

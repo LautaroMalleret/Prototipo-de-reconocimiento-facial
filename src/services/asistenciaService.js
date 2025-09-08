@@ -20,6 +20,7 @@ export const getAllLlegadasTarde = async () => {
   if (error) throw error;
   return data;
 };
+
 export const registrarIngreso = async ({ empleado_id, fecha, hora }) => {
   //obtengo el turno del empleado
   const { data: turnoData, error: turnoError } = await supabase
@@ -41,6 +42,10 @@ export const registrarIngreso = async ({ empleado_id, fecha, hora }) => {
     .eq("empleado_id", empleado_id)
     .eq("fecha", fechaFormateada)
     .single();
+    if (fetchError && fetchError.code !== "PGRST116") {
+      console.log("no hay asistencia previa, error")
+      throw fetchError;
+    }
   //verifico que este ingresando en su turno y ya no tenga una asistencia ese mismo dia
   if (permitirAccesoTurno(turno, horaFormateada) && !existente) {
     console.log("Creando nuevo ingreso...");
@@ -61,7 +66,7 @@ export const registrarIngreso = async ({ empleado_id, fecha, hora }) => {
 
 //funcion para registrar un egreso
 export const registrarEgreso = async ({ empleado_id, fecha, hora }) => {
-    const { data: turnoData, error: turnoError } = await supabase
+  const { data: turnoData, error: turnoError } = await supabase
     .from("empleados")
     .select("turno")
     .eq("_id", empleado_id)
@@ -73,8 +78,8 @@ export const registrarEgreso = async ({ empleado_id, fecha, hora }) => {
   //formateo hora y fecha
   const horaFormateada = formatearHora(hora);
   let fechaFormateada = formatearFecha(fecha, 0);
-  //si el turno es noche, 
-    if (turno === "noche") {
+  //si el turno es noche,
+  if (turno === "noche") {
     fechaFormateada = formatearFecha(fecha, 1);
   }
   //verifico que tenga un ingreso registrado
@@ -89,17 +94,50 @@ export const registrarEgreso = async ({ empleado_id, fecha, hora }) => {
     return false;
   }
   //si tiene un acceso registrado registro el egreso
-  if(existente.hora_egreso === null){
-  console.log("Ya existe asistencia previa, actualizando...");
-  const { data, error } = await supabase
-    .from("asistencia")
-    .update({ hora_egreso: horaFormateada })
-    .eq("empleado_id", existente.empleado_id)
+  if (existente.hora_egreso === null) {
+    console.log("Ya existe asistencia previa, actualizando...");
+    const { data, error } = await supabase
+      .from("asistencia")
+      .update({ hora_egreso: horaFormateada })
+      .eq("empleado_id", existente.empleado_id);
     // .eq("fecha", existente.fechaFormateada);
 
-  if (error) throw error;
-  return true;}
+    if (error) throw error;
+    return true;
+  }
   return false;
+};
+
+export const getIngresoRegistrado = async (empleado_id, fecha, hora) => {
+  const { data: turnoData, error: turnoError } = await supabase
+    .from("empleados")
+    .select("turno")
+    .eq("_id", empleado_id)
+    .single();
+
+    const turno = turnoData.turno;
+
+    let fechaFormateada = formatearFecha(fecha, 0);//verifico que no sea una entrada del dia anterior
+    if (turno === "noche" && hora.getHours()<12){
+      fechaFormateada = formatearFecha(fecha, 1);
+    }
+
+    console.log(fechaFormateada);
+    
+  const { data: existente, error: fetchError } = await supabase
+    .from("asistencia")
+    .select("*")
+    .eq("empleado_id", empleado_id)
+    .eq("fecha", fechaFormateada)
+    .single();
+  
+  // Corregido: se debe chequear fetchError, no 'error' que no existe.
+  if (fetchError && fetchError.code !== 'PGRST116') throw fetchError; // PGRST116: no rows found, lo cual es esperado.
+  if (!existente) {
+    console.log("No existe asistencia previa");
+    return false;
+  }
+  return existente.hora_egreso === null;
 };
 
 // Función para registrar o actualizar asistencia
@@ -244,13 +282,13 @@ export const getTiempoDeRetrasoPorFecha = async () => {
 // Función para calcular retraso en minutos dependiendo el turno del empleado
 function calcularRetraso(turno, horaIngreso) {
   var horaNormal = "";
-  if ((turno = "mañana")) {
+  if (turno === "mañana") {
     horaNormal = "06:00:00";
   }
-  if ((turno = "tarde")) {
+  if (turno === "tarde") {
     horaNormal = "14:00:00";
   }
-  if ((turno = "noche")) {
+  if (turno === "noche") {
     horaNormal = "22:00:00";
   }
   const [hnH, hnM] = horaNormal.split(":").map(Number);
@@ -311,5 +349,6 @@ function permitirAccesoTurno(turno, hora) {
   if (turno === "noche" && hora >= "21:00:00") {
     return true;
   }
+  console.log("acceso denegado por horario de turno")
   return false;
 }

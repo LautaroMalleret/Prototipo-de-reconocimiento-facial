@@ -5,8 +5,29 @@ import {
   getAllFaltas,
   getTiempoDeRetrasoPorFecha,
   registrarIngreso,
-  registrarEgreso
+  registrarEgreso,
+  getIngresoRegistrado
 } from "../services/asistenciaService.js";
+
+//verifico si el empleado tiene un ingreso en esa fecha 
+export const verificarIngreso = async (req, res) => {
+  try {
+    const now = new Date();
+    const empleado_id = req.params.id;
+    const fecha = new Date().toISOString().split('T')[0];
+
+    const ingreso = await getIngresoRegistrado(empleado_id, fecha, now);
+    // console.log(res.json(JSON.stringify(ingreso)));
+
+    return res.status(200).json(ingreso);
+  }
+  catch (error){
+    res.status(500).json({ error: error.message });
+  }
+}
+
+
+
 
 // Controlador para obtener todas las asistencias
 export const obtenerAsistencias = async (req, res) => {
@@ -28,6 +49,7 @@ export const nuevaAsistencia = async (req, res) => {
     }
 
     const asistencia = await registrarIngreso({ empleado_id, fecha, hora });
+    console.log(asistencia);
     if (!asistencia){
       res.status(404).json({ error: "asistencia no registrada" });
       return;
